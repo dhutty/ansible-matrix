@@ -4,7 +4,9 @@
   become: yes
   tasks:
     - name: Install packages needed to compile coturn server
-      action: apt pkg={{item}} state=installed
+      apt:
+        pkg: "{{item}}"
+        state: installed
       with_items:
        - gcc
        - make
@@ -13,22 +15,30 @@
        - libsqlite3-dev
 
     - name: Clone coturn from github
-      git: repo=https://github.com/coturn/coturn.git dest=/usr/src/coturn
+      git:
+        repo: "https://github.com/coturn/coturn.git"
+        dest: /usr/src/coturn
+      notify:
+        - Start turn server
 
     - name: Compile and install coturn
       shell: ./configure && make && make install
       args:
         chdir: /usr/src/coturn
+      notify:
+        - Start turn server
 
     - name: Install turnserver config
       template:
-        src=etc/turnserver.conf
-        dest=/etc/turnserver.conf
+        src: turnserver.conf.j2
+        dest: /etc/turnserver.conf
+      notify:
+        - Restart turn server
 
     - name: Install upstart script
       template:
-        src=etc/init/turnserver.conf
-        dest=/etc/init/turnserver.conf
+        src: turnserver-init.conf.j2
+        dest: /etc/init/turnserver.conf
+      notify:
+        - Restart turn server
 
-    - name: Start turn server
-      service: name=turnserver state=started

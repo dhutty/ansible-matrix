@@ -1,0 +1,19 @@
+- name: Start synapse server
+  service:
+    name: synapse
+    state: started
+
+- name: Restart synapse server
+  service:
+    name: synapse
+    state: restarted
+
+- name: Start turn server
+  service:
+    name: turnserver
+    state: started
+
+- name: Restart turn server
+  service:
+    name: turnserver
+    state: restarted

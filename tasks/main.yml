@@ -1,21 +1,17 @@
 ---
 
-- hosts: all
+- hosts: synapse
   become: yes
-
   tasks:
-    - apt: update_cache=yes
     - name: install basic packages that we want to be on all nodes
-      action: apt pkg={{item}} state=installed
+      apt:
+        pkg: "{{item}}"
+        state: installed
+        update_cache: yes
+        cache_valid_time: 3600
       with_items:
-       - joe
-       - tcpdump
-       - tshark
        - wget
        - git
-       - vim
-       - locate
-       - pwgen
 
 - include: synapse.yml
 - include: coturn.yml
