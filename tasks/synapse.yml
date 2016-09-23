@@ -1,133 +1,130 @@
 ---
 
-- hosts: synapse
-  become: yes
-  tasks:
-    - name: Install packages needed by synapse
-      apt:
-        pkg: "{{item}}"
-        state: installed
-      with_items:
-       - build-essential
-       - python2.7-dev
-       - libffi-dev
-       - python-pip
-       - python-setuptools
-       - sqlite3
-       - libssl-dev
-       - python-virtualenv
-       - python3-openssl
-       - libjpeg-dev
+- name: Install packages needed by synapse
+  apt:
+    pkg: "{{item}}"
+    state: installed
+  with_items:
+   - build-essential
+   - python2.7-dev
+   - libffi-dev
+   - python-pip
+   - python-setuptools
+   - sqlite3
+   - libssl-dev
+   - python-virtualenv
+   - python3-openssl
+   - libjpeg-dev
 
-    - name: Create synapse user
-      user:
-        name: "{{username}}"
-        shell: /bin/bash
-        groups: sudo
+- name: Create synapse user
+  user:
+    name: "{{username}}"
+    shell: /bin/bash
+    groups: sudo
 
-    - name: Create virtualenv
-      command: virtualenv -p python2.7 ~/.synapse
-      args:
-        chdir: "/home/{{ username }}"
+- name: Create virtualenv
+  command: virtualenv -p python2.7 ~/.synapse
+  args:
+    chdir: "/home/{{ username }}"
 
-    - name: PIP to upgrade setup tools
-      pip:
-        name: setuptools
-        virtualenv: "/home/{{ username }}/.synapse extra_args='--upgrade'"
+- name: PIP to upgrade setup tools
+  pip:
+    name: setuptools
+    virtualenv: "/home/{{ username }}/.synapse extra_args='--upgrade'"
 
-    - name: PIP to install needed dependencies into virtualenv
-      pip:
-        name: "{{ item }}"
-        virtualenv: "/home/{{ username }}/.synapse"
-      with_items:
-       - cryptography
-       - pyasn1_modules
-       - characteristic
-       - simplejson
-       - canonicaljson
+- name: PIP to install needed dependencies into virtualenv
+  pip:
+    name: "{{ item }}"
+    virtualenv: "/home/{{ username }}/.synapse"
+  with_items:
+   - cryptography
+   - pyasn1_modules
+   - characteristic
+   - simplejson
+   - canonicaljson
 
-    - name: PIP to install synapase from Git Repo into virtualenv
-      pip:
-        name: "{{ git_repo }}"
-        virtualenv: "/home/{{ username }}/.synapse"
-      notify:
-        - Start synapse server
+- name: PIP to install synapase from Git Repo into virtualenv
+  pip:
+    name: "{{ git_repo }}"
+    virtualenv: "/home/{{ username }}/.synapse"
+  notify:
+    - Start synapse server
 
-    - name: Generate homeserver.yaml config file
-      shell: ". bin/activate && python -m synapse.app.homeserver --server-name {{ hostname }} --config-path homeserver.yaml --generate-config --report-stats=yes"
-      args:
-        chdir: "/home/{{ username }}/.synapse/"
-        creates: "/home/{{ username }}/.synapse/homeserver.yaml"
-      notify:
-        - Restart synapse server
+- name: Generate homeserver.yaml config file
+  shell: ". bin/activate && python -m synapse.app.homeserver --server-name {{ hostname }} --config-path homeserver.yaml --generate-config --report-stats=yes"
+  args:
+    chdir: "/home/{{ username }}/.synapse/"
+    creates: "/home/{{ username }}/.synapse/homeserver.yaml"
+  notify:
+    - Restart synapse server
 
-    - name: Configure if registrations are enabled by default or not
-      lineinfile:
-        dest: "/home/{{ username }}/.synapse/homeserver.yaml"
-        regexp: "^enable_registration:"
-        line: "enable_registration: {{ enable_registration }}"
-      notify:
-        - Restart synapse server
+- name: Configure if registrations are enabled by default or not
+  lineinfile:
+    dest: "/home/{{ username }}/.synapse/homeserver.yaml"
+    regexp: "^enable_registration:"
+    line: "enable_registration: {{ enable_registration }}"
+  notify:
+    - Restart synapse server
 
-    - name: Configure if captchas are enabled by default or not
-      lineinfile:
-        dest: "/home/{{ username }}/.synapse/homeserver.yaml"
-        regexp: "^enable_registration_captcha:"
-        line: "enable_registration_captcha: {{ enable_registration_captcha }}"
-      notify:
-        - Restart synapse server
+- name: Configure if captchas are enabled by default or not
+  lineinfile:
+    dest: "/home/{{ username }}/.synapse/homeserver.yaml"
+    regexp: "^enable_registration_captcha:"
+    line: "enable_registration_captcha: {{ enable_registration_captcha }}"
+  notify:
+    - Restart synapse server
 
-    - name: Configure private-key recaptcha key
-      lineinfile:
-        dest: "/home/{{ username }}/.synapse/homeserver.yaml"
-        regexp: "^recaptcha_private_key:"
-        line: "recaptcha_private_key: {{ recaptcha_private_key }}"
-      notify:
-        - Restart synapse server
+- name: Configure private-key recaptcha key
+  lineinfile:
+    dest: "/home/{{ username }}/.synapse/homeserver.yaml"
+    regexp: "^recaptcha_private_key:"
+    line: "recaptcha_private_key: {{ recaptcha_private_key }}"
+  notify:
+    - Restart synapse server
 
-    - name: Configure public-key recaptcha key
-      lineinfile:
-        dest: "/home/{{ username }}/.synapse/homeserver.yaml"
-        regexp: "^recaptcha_public_key:"
-        line: "recaptcha_public_key: {{ recaptcha_public_key }}"
-      notify:
-        - Restart synapse server
+- name: Configure public-key recaptcha key
+  lineinfile:
+    dest: "/home/{{ username }}/.synapse/homeserver.yaml"
+    regexp: "^recaptcha_public_key:"
+    line: "recaptcha_public_key: {{ recaptcha_public_key }}"
+  notify:
+    - Restart synapse server
 
-    - name: Configure turn_uris
-      lineinfile:
-        dest: "/home/{{ username }}/.synapse/homeserver.yaml"
-        line: "turn_uris: [ \"turn:{{ hostname }}:3478?transport=udp\", \"turn:{{ hostname }}:3478?transport=tcp\" ]"
-      notify:
-        - Restart synapse server
+- name: Configure turn_uris
+  lineinfile:
+    dest: "/home/{{ username }}/.synapse/homeserver.yaml"
+    line: "turn_uris: [ \"turn:{{ hostname }}:3478?transport=udp\", \"turn:{{ hostname }}:3478?transport=tcp\" ]"
+  notify:
+    - Restart synapse server
 
-    - name: Configure turn_user_lifetime
-      lineinfile:
-        dest: "/home/{{ username }}/.synapse/homeserver.yaml"
-        line: "turn_shared_secret: {{ turn_shared_secret }}"
-      notify:
-        - Restart synapse server
+- name: Configure turn_user_lifetime
+  lineinfile:
+    dest: "/home/{{ username }}/.synapse/homeserver.yaml"
+    line: "turn_shared_secret: {{ turn_shared_secret }}"
+  notify:
+    - Restart synapse server
 
-    - name: Configure turn_user_lifetime
-      lineinfile:
-        dest: "/home/{{ username }}/.synapse/homeserver.yaml"
-        line: "turn_user_lifetime: 86400000"
-      notify:
-        - Restart synapse server
+- name: Configure turn_user_lifetime
+  lineinfile:
+    dest: "/home/{{ username }}/.synapse/homeserver.yaml"
+    line: "turn_user_lifetime: 86400000"
+  notify:
+    - Restart synapse server
 
-    - name: Set permissions
-      file:
-        path: "/home/{{ username }}/.synapse"
-        state: directory
-        owner: "{{ username }}"
-        group: "{{ username }}"
-        recurse: yes
-      notify:
-        - Restart synapse server
+- name: Set permissions
+  file:
+    path: "/home/{{ username }}/.synapse"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    recurse: yes
+  notify:
+    - Restart synapse server
 
-    - name: Install upstart script
-      template:
-        src: "synapse.conf.j2"
-        dest: "/etc/init/synapse.conf"
-      notify:
-        - Restart synapse server
+- name: Install upstart script
+  template:
+    src: "synapse.conf.j2"
+    dest: "/etc/init/synapse.conf"
+  notify:
+    - Restart synapse server
 

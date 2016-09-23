@@ -1,44 +1,41 @@
 ---
 
-- hosts: synapse
-  become: yes
-  tasks:
-    - name: Install packages needed to compile coturn server
-      apt:
-        pkg: "{{item}}"
-        state: installed
-      with_items:
-       - gcc
-       - make
-       - autoconf
-       - libevent-dev
-       - libsqlite3-dev
+- name: Install packages needed to compile coturn server
+  apt:
+    pkg: "{{item}}"
+    state: installed
+  with_items:
+   - gcc
+   - make
+   - autoconf
+   - libevent-dev
+   - libsqlite3-dev
 
-    - name: Clone coturn from github
-      git:
-        repo: "https://github.com/coturn/coturn.git"
-        dest: /usr/src/coturn
-      notify:
-        - Start turn server
+- name: Clone coturn from github
+  git:
+    repo: "https://github.com/coturn/coturn.git"
+    dest: /usr/src/coturn
+  notify:
+    - Start turn server
 
-    - name: Compile and install coturn
-      shell: ./configure && make && make install
-      args:
-        chdir: /usr/src/coturn
-      notify:
-        - Start turn server
+- name: Compile and install coturn
+  shell: ./configure && make && make install
+  args:
+    chdir: /usr/src/coturn
+  notify:
+    - Start turn server
 
-    - name: Install turnserver config
-      template:
-        src: turnserver.conf.j2
-        dest: /etc/turnserver.conf
-      notify:
-        - Restart turn server
+- name: Install turnserver config
+  template:
+    src: turnserver.conf.j2
+    dest: /etc/turnserver.conf
+  notify:
+    - Restart turn server
 
-    - name: Install upstart script
-      template:
-        src: turnserver-init.conf.j2
-        dest: /etc/init/turnserver.conf
-      notify:
-        - Restart turn server
+- name: Install upstart script
+  template:
+    src: turnserver-init.conf.j2
+    dest: /etc/init/turnserver.conf
+  notify:
+    - Restart turn server
 
