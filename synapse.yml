@@ -1,9 +1,7 @@
 ---
 
 - hosts: synapse
-  sudo: yes
-  sudo_user: root
-
+  become: yes
   tasks:
     - name: Install packages needed by synapse
       action: apt pkg={{item}} state=installed
