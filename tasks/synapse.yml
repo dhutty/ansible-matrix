@@ -30,7 +30,8 @@
 - name: PIP to upgrade setup tools
   pip:
     name: setuptools
-    virtualenv: "/home/{{ username }}/.synapse extra_args='--upgrade'"
+    virtualenv: "/home/{{ username }}/.synapse"
+    extra_args: '--upgrade'
 
 - name: PIP to install needed dependencies into virtualenv
   pip:
